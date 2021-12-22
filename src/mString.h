@@ -19,55 +19,15 @@
 
 #include <string>
 #include <string.h>
+#include "f28004x_device.h"         // f28004x Headerfile Include File
 using namespace std;
 
 #define DEC 10
 #define HEX 16
 
-// закодил, но тут вроде не используется
-char* mUtoa(Uint32 value, char *buffer, bool clear = 1);
-char* mLtoa(int32 value, char *buffer, bool clear = 1);
-char* mFtoa(double value, char decimals, char *buffer);
-
-char* mUtoa(Uint32 value, char *buffer, bool clear)
-{
-    buffer += 11;
-    if (clear)
-        *--buffer = 0;
-    do
-    {
-        *--buffer = value % 10 + '0';
-        value /= 10;
-    }
-    while (value != 0);
-    return buffer;
-}
-
-char* mLtoa(int32 value, char *buffer, bool clear)
-{
-    bool minus = value < 0;
-    if (minus)
-        value = -value;
-    buffer = mUtoa(value, buffer, clear);
-    if (minus)
-        *--buffer = '-';
-    return buffer;
-}
-
-char* mFtoa(double value, Uint16 decimals, char *buffer)
-{
-    int32 mant = (int32) value;
-    value -= mant;
-    Uint32 exp = 1;
-    while (decimals--)
-        exp *= 10;
-    exp *= (float) value;
-    buffer = ltoa(mant, buffer, DEC);
-    char len = strlen(buffer);
-    *(buffer + len++) = '.';
-    ltoa(exp, buffer + len++, DEC);
-    return buffer;
-}
+char* mUtoa(Uint32 value, char *buffer, bool clear);
+char* mLtoa(int32 value, char *buffer, bool clear);
+char* mFtoa(double value, Uint16 decimals, char *buffer);
 
 template<Uint16 _MS_SIZE>
 class mString
@@ -107,15 +67,9 @@ public:
         strcat(buf, data);
         return *this;
     }
-    mString& add(Uint32 value)
-    {
-        char vBuf[11];
-        utoa(value, vBuf, DEC);
-        return add(vBuf);
-    }
     mString& add(Uint16 value)
     {
-        return add((Uint32) value);
+        return add((int32) value);
     }
     mString& add(int32 value)
     {
@@ -337,11 +291,13 @@ public:
         return buf;
     }
 
+    // ...
     bool startsWith(const char *data, Uint16 offset = 0)
     {
         return strlen(data) == strspn(buf + offset, data);
     }
 
+    // get substring (from to) to arr
     void substring(Uint16 from, Uint16 to, char *arr)
     {
         char backup = buf[++to];
@@ -349,6 +305,8 @@ public:
         strcpy(arr, buf + from);
         buf[to] = backup;
     }
+
+    // split by div (replace div to \0)
     int split(char **ptrs, char div = ',')
     {
         int i = 0, j = 1;
@@ -364,6 +322,8 @@ public:
         }
         return j;
     }
+
+    // remove amount chars from the end
     void truncate(Uint16 amount)
     {
         Uint16 len = length();
@@ -372,7 +332,9 @@ public:
         else
             buf[len - amount] = '\0';
     }
-    void remove(Uint16 index, Uint16 count)
+
+    // same to String erase
+    void erase(Uint16 index, Uint16 count)
     {
         Uint16 len = length();
         if (index >= len)
