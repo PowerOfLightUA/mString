@@ -19,7 +19,9 @@
 
 #include <string>
 #include <string.h>
-#include "f28004x_device.h"         // f28004x Headerfile Include File
+
+#include "hal.h"
+
 using namespace std;
 
 #define DEC 10
